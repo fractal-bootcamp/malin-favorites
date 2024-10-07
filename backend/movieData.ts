@@ -1,4 +1,4 @@
-const movieData = [
+export const movieData = [
   {
     title: "The Shawshank Redemption",
     director: "Frank Darabont",
