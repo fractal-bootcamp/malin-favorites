@@ -15,6 +15,7 @@ type MovieData = {
   description: string;
   genre: string[];
   releaseDate?: string | undefined;
+  posterUrl: string;
 }
 
 // Ensure movieData conforms to MovieData type
@@ -54,6 +55,7 @@ async function main() {
         title: movie.title,
         description: movie.description,
         releaseDate: movie.releaseDate || 'Unknown',
+        posterUrl: movie.posterUrl,  // Added posterUrl to the movie creation,
         director: {
           connect: { id: director.id },  // Connect to the upserted director
         },
