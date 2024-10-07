@@ -16,16 +16,16 @@ datasource db {
 model Movie {
   id          String   @id @default(cuid())
   title       String
-  author      Director @relation(fields: [authorId], references: [id]) // Movies can have one director (1-1)
-  authorId    String
-  releaseDate String
+  director    Director @relation(fields: [directorId], references: [id]) // Movies can have one director (1-1)
+  directorId  String
+  releaseDate String? //optional to align with prismaClient preferences
   genres      Genre[] // Movies can have multiple genres (m-n)
   description String
 }
 
 model Director {
   id     String  @id @default(cuid())
-  name   String
+  name   String  @unique
   movies Movie[] // Directors can have multiple Movies (1-m)
 }
 
