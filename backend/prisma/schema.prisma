@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Movie {
+  id          String   @id @default(cuid())
+  title       String
+  author      Director @relation(fields: [authorId], references: [id]) // Movies can have one director (1-1)
+  authorId    String
+  releaseDate String
+  genres      Genre[] // Movies can have multiple genres (m-n)
+  description String
+}
+
+model Director {
+  id     String  @id @default(cuid())
+  name   String
+  movies Movie[] // Directors can have multiple Movies (1-m)
+}
+
+model Genre {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  movies Movie[] // Each Genre as a category can have multiple movies (m-n)
+}
