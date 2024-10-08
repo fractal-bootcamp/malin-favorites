@@ -1,6 +1,7 @@
 import express from 'express'
 import { createServer } from "http"
 import { PrismaClient } from '@prisma/client';
+import cors from 'cors';
 
 // create an express app
 const app = express();
@@ -10,12 +11,15 @@ const prisma = new PrismaClient();
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+// Enable CORS for all routes
+app.use(cors());
+
 // first we need a /GET request for the frontend to query movie data from
 app.get('/api/movies/search', async (req, res) => {
-  // destructure the request query and assign the value to q
-  const { q } = req.query;
+  // destructure the request query and assign the value to query
+  const { query } = req.query;
   // explicitly check that the query is a string
-  const searchQuery = typeof q === "string" ? q : "";
+  const searchQuery = typeof query === "string" ? query : "";
   // call the psql database and store the related movies in a variable as an object
   const movies = await prisma.movie.findMany({
     where: {
@@ -37,7 +41,7 @@ app.get('/api/movies/search', async (req, res) => {
   console.log('returning a movies object:', movies, typeof(movies))
   // send the movies object back to the client as a json object
   res.json(movies)
-})
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

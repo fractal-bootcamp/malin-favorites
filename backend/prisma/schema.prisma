@@ -15,7 +15,7 @@ datasource db {
 
 model Movie {
   id          String   @id @default(cuid())
-  title       String
+  title       String   @unique
   director    Director @relation(fields: [directorId], references: [id]) // Movies can have one director (1-1)
   directorId  String
   releaseDate String? //optional to align with prismaClient preferences

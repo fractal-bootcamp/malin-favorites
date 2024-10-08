@@ -1306,3 +1306,5 @@ export const movieData = [
     "posterUrl": "https://image.tmdb.org/t/p/w500/1EqsuQxayOZCLV7AiEnNRRKLsS.jpg"
   }
 ]
+
+console.log(movieData.length)
