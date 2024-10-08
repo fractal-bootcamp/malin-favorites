@@ -45,9 +45,9 @@ const SearchSection: React.FC<SearchSectionProps> = ({ query, setQuery, handleSe
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
-      <button
+      {/* <button
         className='btn ml-2'
-        onClick={handleSearch}>search</button>
+        onClick={handleSearch}>search</button> */}
     </div>
   )
 }
@@ -83,6 +83,21 @@ const App: React.FC = () => {
   const [query, setQuery] = useState<string>('')
   const [movieData, setMovieData] = useState<Movie[]>([])
 
+  // useEffect hook that triggers the search when the query changes
+  // debounce technique to prevent too many API calls. 
+  // waits for 300ms after the last keystroke before triggering the search.
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (query) {
+        handleSearch()
+      } else {
+        setMovieData([])
+      }
+    }, 100)
+
+    return () => clearTimeout(delayDebounceFn)
+  }, [query])
+
   const handleSearch = async () => {
     // encodeURIComponent encodes special characters in a string to make it safe for use in a URL
     // the part after the ? in the URL is called the query string.
@@ -96,6 +111,7 @@ const App: React.FC = () => {
   return (
     <div className='flex flex-col justify-center items-center mt-8'>
       <div className='font-sixtyfour text-4xl mb-8'>Something Good To Watch</div>
+      {/* could be worth adding an "is Loading" text while results load */}
       <SearchSection query={query} setQuery={setQuery} handleSearch={handleSearch} />
       <div className='movie-cards'>
         {movieData.map(movie => (
