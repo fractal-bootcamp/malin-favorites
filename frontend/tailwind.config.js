@@ -2,8 +2,14 @@
 module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'sixtyfour': ['"Sixtyfour Convergence"', 'sans-serif'],
+        'bebas-neue': ['"Bebas Neue"', 'cursive'],
+        'roboto': ['Roboto', 'sans-serif'],
+      },
+    },
   },
-  plugins: [],
+  plugins: [require("@tailwindcss/typography"), require("daisyui")],
 }
 

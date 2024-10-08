@@ -50,23 +50,28 @@ async function main() {
     );
 
     // Create the movie record and connect it to the director and genres
-    await prisma.movie.create({
-      data: {
+    // Upsert the movie
+    await prisma.movie.upsert({
+      where: { title: movie.title },  // Assuming title is unique
+      update: {
+        description: movie.description,
+        releaseDate: movie.releaseDate || 'Unknown',
+        posterUrl: movie.posterUrl,
+        director: { connect: { id: director.id } },
+        genres: { set: genres.map(genre => ({ id: genre.id })) },
+      },
+      create: {
         title: movie.title,
         description: movie.description,
         releaseDate: movie.releaseDate || 'Unknown',
-        posterUrl: movie.posterUrl,  // Added posterUrl to the movie creation,
-        director: {
-          connect: { id: director.id },  // Connect to the upserted director
-        },
-        genres: {
-          connect: genres.map(genre => ({ id: genre.id })),  // Connect to all upserted genres
-        },
+        posterUrl: movie.posterUrl,
+        director: { connect: { id: director.id } },
+        genres: { connect: genres.map(genre => ({ id: genre.id })) },
       },
     });
 
     // Log progress to the console
-    console.log(`Inserted movie: ${movie.title}`);
+    console.log(`Inserted movie: ${movie.title} with ${movie.posterUrl}`);
   }
 
   // Log completion message
