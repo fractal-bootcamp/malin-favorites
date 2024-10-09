@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { clerkClient, clerkMiddleware, getAuth, requireAuth, type User } from '@clerk/express';
 import cors from 'cors';
 import 'dotenv/config'
+import { userValidationMiddleware } from './middleware/userValidationMiddleware';
 
 // create an express app
 const app = express();
@@ -49,6 +50,8 @@ type Movie = {
   favoritedBy: UserStructure[]
 }
 
+app.use(userValidationMiddleware);
+
 // protect your routes by redirecting unauthenticated users to the sign-in page
 // requireAuth is used to protect the /protected route
 // if user is not authenticated and enters a protected route they are redirected to the sign-in route
@@ -85,12 +88,67 @@ app.get('/protected', requireAuth({ signInUrl: '/sign-in '}), async(req, res) =>
   }
 })
 
-app.post('/api/movies/favorites', async (req, res) => {
-  
-})
+app.post('/api/movies/add-to-favorite', async (req, res) => {
+  const { userId } = getAuth(req);
+  console.log(userId)
+  const { movieId } = req.body;
+
+  // Validate that movieId is provided
+  if (!movieId || !userId) {
+    return res.status(400).json({ error: 'required identifiers missing' });
+  }
+
+  const updatedUserFavorites = await prisma.user.update({
+    where: { uniqueId: userId },
+    data: {
+      favorites: {
+        connect: { id: movieId}
+      }
+    },
+    include: { favorites: true}
+  });
+
+  console.log(`Favorite successfully added:
+    User ID: ${userId}
+    Movie ID: ${movieId}
+    Added favorite details: ${JSON.stringify(updatedUserFavorites.favorites.find(f => f.id === movieId) || 'Not found')}`
+  );
+
+  res.json({ success: true, favorites: updatedUserFavorites.favorites });
+});
+
+app.post('/api/movies/remove-from-favorite', async (req, res) => {
+  const { userId } = getAuth(req);
+  const { movieId } = req.body;
+
+  // Validate that movieId is provided
+  if (!movieId || !userId) {
+    return res.status(400).json({ error: 'required identifiers missing' });
+  }
+
+  const updatedUserFavorites = await prisma.user.update({
+    where: { uniqueId: userId },
+    data: {
+      favorites: {
+        disconnect: { id: movieId}
+      }
+    },
+    include: { favorites: true}
+  });
+
+  console.log(`Favorite removed successfully:
+    User ID: ${userId}
+    Movie ID: ${movieId}
+    Remaining favorites: ${updatedUserFavorites.favorites.length}
+    Removed favorite details: ${JSON.stringify(updatedUserFavorites.favorites.find(f => f.id === movieId) || 'Not found')}`
+  );
+
+  res.json({ success: true, favorites: updatedUserFavorites.favorites });
+});
 
 // first we need a /GET request for the frontend to query movie data from
 app.get('/api/movies/search', async (req, res) => {
+  const { userId } = getAuth(req);
   // destructure the request query and assign the value to query
   const { query } = req.query;
   // explicitly check that the query is a string
@@ -109,13 +167,36 @@ app.get('/api/movies/search', async (req, res) => {
     // return all the information from the related director and genre tables too
     include: {
       director: true,
-      genres: true
+      genres: true,
+      favoritedBy: true,
     },
     take: 20
   });
-  console.log('returning a movies object:', movies, typeof(movies))
+  
+  const isFavoriteOfUser = () => {
+    const searchArray = movies[0].favoritedBy
+    return searchArray.some(usr => usr.uniqueId === userId)
+  }
+
+  const checkIfThisIsAFavoriteOfUser = isFavoriteOfUser();
+
+  const moviesWithFavoritedBy = movies.map(item => ({
+    ...item,
+    favoritedBy: checkIfThisIsAFavoriteOfUser
+  }));
+
+  console.log(moviesWithFavoritedBy)
   // send the movies object back to the client as a json object
-  res.json(movies)
+  res.json(moviesWithFavoritedBy)
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.statusCode || 500).json({
+    status: 'error',
+    message: err.message || 'An unexpected error occurred'
+  });
 });
 
 const PORT = process.env.PORT || 3000;
